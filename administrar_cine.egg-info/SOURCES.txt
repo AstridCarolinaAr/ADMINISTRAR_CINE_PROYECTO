@@ -1,0 +1,6 @@
+pyproject.toml
+administrar_cine.egg-info/PKG-INFO
+administrar_cine.egg-info/SOURCES.txt
+administrar_cine.egg-info/dependency_links.txt
+administrar_cine.egg-info/requires.txt
+administrar_cine.egg-info/top_level.txt

@@ -1,0 +1,13 @@
+[project]
+name = "administrar-cine"
+version = "0.1.0"
+description = "Sistema para administrar reservas de cine"
+readme = "README.md"
+requires-python = ">=3.10"
+
+[project.optional-dependencies]
+dev = [
+    "rich",
+    "ruff",
+    "pytest"
+]

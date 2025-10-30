@@ -8,23 +8,25 @@ from rich.console import Console
 import pyfiglet
 
 console = Console()
+
 console.print(
     Panel.fit(
-        "[bold white on blue]🎬 GESTIÓN DE PELÍCULAS 🎬[/bold white on blue]",
+        "[bold white on blue]GESTIÓN DE PELÍCULAS 🎬[/bold white on blue]",
         border_style="bright_blue",
         padding=(1, 5),
     )
 )
+
 titulo = pyfiglet.figlet_format("GESTIÓN DE PELÍCULAS", font="slant")
 print(titulo)
-
-
 console.print(f"[bold blue]{titulo}[/bold blue]")
 
 # Funciones utilitarias
 
+
 def limpiar_pantalla():
     os.system("cls" if os.name == "nt" else "clear")
+
 
 def pausar():
     console.print("\n[dim]Presiona Enter para continuar...[/dim]")
@@ -33,25 +35,50 @@ def pausar():
 # Funciones del CRUD
 
 def inicializar_csv():
-    """Crea el archivo CSV si no existe."""
+    """ se Crea el archivo CSV si no existe."""
     if not os.path.exists('peliculas.csv'):
         with open('peliculas.csv', mode='w', newline='', encoding='utf-8') as archivo:
             writer = csv.writer(archivo)
             writer.writerow(['ID', 'Titulo', 'Genero', 'Duracion_min'])
-        console.print("[green]Archivo 'peliculas.csv' creado con éxito.[/green]")
+        console.print("[green]Archivo 'peliculas.csv' se ha creado con éxito.[/green]")
 
 
 def agregar_pelicula():
     limpiar_pantalla()
     console.print(Panel("[bold cyan]Agregar nueva película[/bold cyan]", border_style="cyan"))
-    id = input("ID: ")
-    titulo = input("Título: ")
-    genero = input("Género: ")
-    duracion = input("Duración (min): ")
 
+# Validar que el ID solo contenga números
+    while True:
+        id = input("digita el ID: ").strip()
+        if id.isdigit():
+            break
+        console.print("[red]El ID debe contener solamente números. Inténtalo de nuevo.[/red]")
+#Validar título no vacío
+    while True:
+        titulo = input("Titulo de la pelicula: ").strip()
+        if titulo:
+            break
+        console.print("[red]El título NO PUEDE estar vacío.[/red]")
+
+#Validar género no vacío
+    while True:
+        genero = input("Género de la pelicula: ").strip()
+        if genero:
+            break
+        console.print("[red]El género no puede estar vacío.[/red]")
+
+# Validar duración numérica y positiva
+    while True:
+        duracion = input("Duración (min): ").strip()
+        if duracion.isdigit() and int(duracion) > 0:
+            break
+        console.print("[red]La duración debe ser un número positivo.[/red]")
+
+#Guardar en CSV
     with open('peliculas.csv', mode='a', newline='', encoding='utf-8') as archivo:
         writer = csv.writer(archivo)
         writer.writerow([id, titulo, genero, duracion])
+
     console.print(f"[bold green]Película '{titulo}' agregada correctamente.[/bold green]")
     pausar()
 
@@ -89,7 +116,14 @@ def listar_peliculas():
 
 def actualizar_pelicula():
     limpiar_pantalla()
-    id_buscar = input("Ingresa el ID de la película que quieres actualizar: ")
+
+#Validar ID numérico
+    while True:
+        id_buscar = input("Ingresa el ID de la película que quieres actualizar: ").strip()
+        if id_buscar.isdigit():
+            break
+        console.print("[red]El ID debe contener solo números.[/red]")
+
     peliculas = []
     encontrado = False
 
@@ -98,9 +132,22 @@ def actualizar_pelicula():
         for fila in reader:
             if fila['ID'] == id_buscar:
                 console.print(f"[cyan]Película encontrada:[/cyan] {fila['Titulo']}")
-                fila['Titulo'] = input("Nuevo título: ")
-                fila['Genero'] = input("Nuevo género: ")
-                fila['Duracion_min'] = input("Nueva duración (min): ")
+
+                # Validar nuevas entradas
+                nuevo_titulo = input("Nuevo título (dejar vacío para mantener el actual): ").strip()
+                nuevo_genero = input("Nuevo género (dejar vacío para mantener el actual): ").strip()
+                nueva_duracion = input("Nueva duración (min, dejar vacío para mantener el actual): ").strip()
+
+                if nuevo_titulo:
+                    fila['Titulo'] = nuevo_titulo
+                if nuevo_genero:
+                    fila['Genero'] = nuevo_genero
+                if nueva_duracion:
+                    if nueva_duracion.isdigit() and int(nueva_duracion) > 0:
+                        fila['Duracion_min'] = nueva_duracion
+                    else:
+                        console.print("[yellow]Duración inválida, se mantiene el valor anterior.[/yellow]")
+
                 encontrado = True
             peliculas.append(fila)
 
@@ -119,7 +166,14 @@ def actualizar_pelicula():
 
 def eliminar_pelicula():
     limpiar_pantalla()
-    id_eliminar = input("Ingresa el ID de la película que deseas eliminar: ")
+
+#Validar ID numérico
+    while True:
+        id_eliminar = input("Ingresa el ID de la película que deseas eliminar: ").strip()
+        if id_eliminar.isdigit():
+            break
+        console.print("[red]El ID debe contener solo números.[/red]")
+
     peliculas = []
     eliminado = False
 
@@ -144,7 +198,7 @@ def eliminar_pelicula():
 
     pausar()
 
-# Menú interactivo con flechas
+# Menú interactivo
 
 def menu_peliculas():
     inicializar_csv()
@@ -171,7 +225,7 @@ def menu_peliculas():
 
         for i, texto in enumerate(opciones):
             if i == seleccionado:
-                tabla.add_row(str(i + 1), f"[black on Red]{texto.center(40)}[/black on red]")
+                tabla.add_row(str(i + 1), f"[black on red]{texto.center(40)}[/black on red]")
             else:
                 tabla.add_row(str(i + 1), texto)
 
@@ -196,6 +250,7 @@ def menu_peliculas():
             elif seleccionado == 4:
                 break
 
+# Ejecución principal
 
 if __name__ == "__main__":
     menu_peliculas()

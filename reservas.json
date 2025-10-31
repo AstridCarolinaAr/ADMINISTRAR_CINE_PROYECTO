@@ -67,5 +67,14 @@
             "A4"
         ],
         "cantidad_boletos": 1
+    },
+    {
+        "id_reserva": 8,
+        "nombre_cliente": "lo",
+        "id_funcion": "1",
+        "asientos": [
+            "A5"
+        ],
+        "cantidad_boletos": 1
     }
 ]

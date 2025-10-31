@@ -111,13 +111,15 @@ def validar_hora(valor: str, campo: str) -> str:
 
 def ver_funciones(funciones):
     if not funciones:
-        console.print("[red] No hay funciones registradas.[/red]")
+        console.print("[bold gold1] No hay funciones registradas.[/bold gold1]")
         return
 
     tabla = Table(
-        title="[bold white on blue]FUNCIONES DISPONIBLES[/bold white on blue]",
-        box=None,
-        border_style="blue",
+        title="[bold black on gold1]FUNCIONES DISPONIBLES[/bold black on gold1]",
+        box=box.SQUARE,
+        border_style="bold dark_blue",
+        title_style="bold bright_red",
+        header_style="bold bright_white",
         show_lines=True,
     )
     for atributo in [
@@ -129,12 +131,29 @@ def ver_funciones(funciones):
     ]:
         # dentro del for, reemplaza la add_column por:
         if atributo == "id_funcion":
-            tabla.add_column(atributo.capitalize(), justify="center", style="yellow")
+            tabla.add_column(
+                atributo.capitalize(), justify="center", style="gold1 on dark_red"
+            )
         elif atributo == "id_pelicula":
-            tabla.add_column(atributo.capitalize(), justify="center", style="white")
+            tabla.add_column(
+                atributo.capitalize(), justify="center", style="gold1 on dark_red"
+            )
         else:
-            tabla.add_column(atributo.capitalize(), justify="center", style="yellow")
+            tabla.add_column(
+                atributo.capitalize(), justify="center", style="gold1 on dark_red"
+            )
     for fn in funciones:
+        if not all(
+            fn.get(k)
+            for k in [
+                "id_funcion",
+                "id_pelicula",
+                "sala",
+                "hora",
+                "asientos_disponibles",
+            ]
+        ):
+            continue  # salta filas incompletas
         tabla.add_row(
             fn["id_funcion"],
             fn["id_pelicula"],
@@ -149,37 +168,92 @@ def ver_funciones(funciones):
 def crear_funcion():
     funciones = cargar_funciones()
     console.rule(
-        "[bold white on blue] Sistema de Funciones de Cine[/bold white on blue]"
+        "[bold white on dark_blue] Sistema de Funciones de Cine[/bold white on dark_blue]"
     )
 
     try:
-        id_funcion = validar_texto(input("ID de la función: "), "ID de la función")
-        if any(funcion["id_funcion"] == id_funcion for funcion in funciones):
-            console.print(f"[red] Ya existe una función con ID {id_funcion}.[/red]")
-            return
+        # Validar ID de función (solo números y único)
+        while True:
+            id_funcion = input("ID de la función (solo números): ").strip()
+            if not id_funcion.isdigit():
+                console.print("[red]El ID debe contener solo números.[/red]")
+                continue
+            if any(funcion["id_funcion"] == id_funcion for funcion in funciones):
+                console.print(f"[red]Ya existe una función con ID {id_funcion}.[/red]")
+                continue
+            break
 
-        id_pelicula = validar_texto(input("ID de la película: "), "ID de la película")
-        sala = validar_texto(input("Sala: "), "Sala")
-        hora = validar_texto(input("Hora (HH:MM): "), "Hora")
-        validar_hora(hora)
-        asientos_disponibles = validar_entero(
-            input("Asientos disponibles: "), "Asientos disponibles"
-        )
+        # Validar que el ID de película exista en peliculas.csv
+        peliculas_existentes = set()
+        if os.path.exists("peliculas.csv"):
+            with open("peliculas.csv", mode="r", encoding="utf-8") as archivo:
+                reader = csv.DictReader(archivo)
+                for fila in reader:
+                    if "ID" in fila:
+                        peliculas_existentes.add(fila["ID"].strip())
+
+        while True:
+            id_pelicula = input("ID de la película: ").strip()
+            if not id_pelicula:
+                console.print("[red]El ID de la película no puede estar vacío.[/red]")
+                continue
+            if id_pelicula not in peliculas_existentes:
+                console.print(
+                    f"[red]No existe una película con ID {id_pelicula}.[/red]"
+                )
+                continue
+            break
+
+        # Validar sala (solo números)
+        while True:
+            sala = input("Sala (solo números): ").strip()
+            if not sala.isdigit():
+                console.print("[red]La sala debe contener solo números.[/red]")
+                continue
+            break
+
+        # Validar hora con formato HH:MM
+        while True:
+            hora_input = input("Hora (formato HH:MM): ").strip()
+            try:
+                hora = validar_hora(hora_input, "Hora")
+                # Validar que no haya otra función en la misma sala y hora
+                conflicto = any(
+                    f["sala"] == sala and f["hora"] == hora for f in funciones
+                )
+                if conflicto:
+                    console.print(
+                        f"[red]Ya existe una función en la sala {sala} a las {hora}. Elige otro horario o sala.[/red]"
+                    )
+                    continue  # vuelve a pedir hora
+                break
+            except ValueError as e:
+                console.print(f"[red]{e}[/red]")
+
+        # Validar asientos disponibles
+        while True:
+            try:
+                asientos_disponibles = validar_entero(
+                    input("Asientos disponibles: "), "Asientos disponibles"
+                )
+                break
+            except ValueError as e:
+                console.print(f"[red]{e}[/red]")
 
         nueva_funcion = {
-            "id_funcion": id_funcion.strip(),
-            "id_pelicula": id_pelicula.strip(),
-            "sala": sala.strip(),
-            "hora": validar_hora(),
+            "id_funcion": id_funcion,
+            "id_pelicula": id_pelicula,
+            "sala": sala,
+            "hora": hora,
             "asientos_disponibles": str(asientos_disponibles),
         }
 
         funciones.append(nueva_funcion)
         guardar_funcion(funciones)
-        console.print("[green] Función creada exitosamente.[/green]")
+        console.print("[green]Función creada exitosamente.[/green]")
 
-    except ValueError as e:
-        console.print(f"[red]{e}[/red]")
+    except Exception as e:
+        console.print(f"[red]Error inesperado: {e}[/red]")
 
 
 def editar_funcion():
@@ -229,7 +303,9 @@ def editar_funcion():
             break
 
     if not encontrada:
-        console.print("[red] No se encontró una función con ese ID.[/red]")
+        console.print(
+            f"[red] No se encontró una función con el ID '{id_funcion}'. Verifica e intenta nuevamente.[/red]"
+        )
 
 
 def pausar_pantalla():
@@ -286,7 +362,6 @@ def menu_funciones() -> None:
         elif tecla == readchar.key.ENTER:
             if opciones[seleccionado] == "VER FUNCIONES":
                 limpiar_pantalla()
-                mostrar_titulo("Funciones Disponibles")
                 ver_funciones(cargar_funciones())
                 pausar_pantalla()
             elif opciones[seleccionado] == "CREAR FUNCIÓN":

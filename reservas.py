@@ -49,7 +49,20 @@ def crear_reserva() -> None:
     console.print(
         "[bold black on gold1]Ingresa los datos para la reserva:[/bold black on gold1]\n"
     )
-    nombre = input("Nombre del cliente: ")
+    import re
+
+    # Validar nombre del cliente (sin números)
+    while True:
+        nombre = input("Nombre del cliente: ").strip()
+        if not nombre:
+            console.print("[red]El nombre no puede estar vacío.[/red]")
+            continue
+        if not re.match(r"^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$", nombre):
+            console.print(
+                "[red]El nombre solo puede contener letras y espacios. No se permiten números ni símbolos.[/red]"
+            )
+            continue
+        break
     funciones = cargar_funciones()
 
     if not funciones:

@@ -372,7 +372,7 @@ def menu_peliculas():
 
 def buscar_peliculas_por_genero():
     """
-    Buscar películas por género
+    Buscar películas por género (coincidencia exacta)
     """
     limpiar_pantalla()
     console.print(
@@ -414,7 +414,9 @@ def buscar_peliculas_por_genero():
 
     # Pedir género y validarlo
     while True:
-        genero_buscar = input("Ingresa el género a buscar: ").strip()
+        genero_buscar = input(
+            "Ingresa el género a buscar (coincidencia exacta): "
+        ).strip()
         if not genero_buscar:
             console.print(
                 "[yellow]Búsqueda vacía. Intenta nuevamente o escribe 'q' para cancelar.[/yellow]"
@@ -424,7 +426,7 @@ def buscar_peliculas_por_genero():
                 .strip()
                 .lower()
             )
-            if opcion == "s" or opcion == "q":
+            if opcion in ("s", "q"):
                 console.print("[dim]Búsqueda cancelada.[/dim]")
                 pausar()
                 return
@@ -435,44 +437,24 @@ def buscar_peliculas_por_genero():
             )
             continue
         break
-    # elegir modo de busqueda
-    console.print("\n[dim]Elige modo de búsqueda:[/dim]")
-    console.print("1. Coincidencia aproximada")
-    console.print("2. Coincidencia exacta")
-    while True:
-        modo = input("Modo (1/2, Enter = 1): ").strip()
-        if modo == "":
-            modo = "1"
-        if modo in ("1", "2"):
-            modo_exacto = modo == "2"
-            break
-        console.print("[red]Opción inválida. Debes ingresar 1 o 2.[/red]")
 
     genero_buscar_norm = genero_buscar.lower()
 
-    # Buscar y recopilar resultados
+    # Buscar y recopilar resultados por coincidencia exacta
     resultados = []
     try:
         with open("peliculas.csv", mode="r", newline="", encoding="utf-8") as archivo:
             reader = csv.DictReader(archivo)
             for fila in reader:
-                # Validar que la fila tenga las claves esperadas
                 if not all(
                     k in fila for k in ("ID", "Titulo", "Genero", "Duracion_min")
                 ):
-                    # Salta filas malformadas
-                    continue
+                    continue  # Salta filas malformadas
 
                 genero_fila_raw = fila.get("Genero") or ""
                 genero_fila = genero_fila_raw.strip().lower()
 
-                if modo_exacto:
-                    match = genero_buscar_norm == genero_fila
-                else:
-                    match = genero_buscar_norm in genero_fila
-
-                if match:
-                    # Asegurar que otros campos no sean None
+                if genero_buscar_norm == genero_fila:
                     id_val = (fila.get("ID") or "").strip()
                     titulo_val = (fila.get("Titulo") or "").strip()
                     duracion_val = (fila.get("Duracion_min") or "").strip()
@@ -489,16 +471,20 @@ def buscar_peliculas_por_genero():
         pausar()
         return
 
-    # Resultado de la búsqueda
+    # Mostrar resultados
     if not resultados:
         console.print(
-            f"[red]No se encontraron películas para el género: {genero_buscar}[/red]"
+            f"[red]No se encontraron películas con el género exacto: '{genero_buscar}'[/red]"
         )
         pausar()
         return
 
-    # Mostrar tabla con resultados
-    tabla = Table(show_header=True, header_style="bold magenta", box=box.ROUNDED)
+    tabla = Table(
+        show_header=True,
+        header_style="bold gold1",
+        box=box.ROUNDED,
+        border_style="dark_blue",
+    )
     tabla.add_column("ID", justify="center")
     tabla.add_column("Título", justify="left")
     tabla.add_column("Género", justify="center")

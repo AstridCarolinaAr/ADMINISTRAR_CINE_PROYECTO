@@ -1,21 +1,27 @@
 import unittest
-from unittest.mock import patch, mock_open
+from unittest.mock import mock_open, patch
+
 import peliculas  # importa tu archivo principal en minúsculas
 
 
 class TestPeliculas(unittest.TestCase):
-
     # --- Prueba de inicialización del archivo CSV ---
     @patch("os.path.exists", return_value=False)
     @patch("builtins.open", new_callable=mock_open)
     def test_inicializar_csv_crea_archivo(self, mock_file, mock_exists):
         peliculas.inicializar_csv()
-        mock_file.assert_called_once_with('peliculas.csv', mode='w', newline='', encoding='utf-8')
+        mock_file.assert_called_once_with(
+            "peliculas.csv", mode="w", newline="", encoding="utf-8"
+        )
 
     # --- Prueba de agregar película ---
     @patch("builtins.input", side_effect=["1", "Matrix", "Acción", "120"])
     @patch("os.path.exists", return_value=True)
-    @patch("builtins.open", new_callable=mock_open, read_data="ID,Titulo,Genero,Duracion_min\n")
+    @patch(
+        "builtins.open",
+        new_callable=mock_open,
+        read_data="ID,Titulo,Genero,Duracion_min\n",
+    )
     @patch("peliculas.pausar")
     def test_agregar_pelicula(self, mock_pausar, mock_file, mock_exists, mock_input):
         peliculas.agregar_pelicula()
@@ -24,16 +30,28 @@ class TestPeliculas(unittest.TestCase):
         handle.write.assert_any_call("1,Matrix,Acción,120\r\n")
 
     # --- Prueba de listar películas ---
-    @patch("builtins.open", new_callable=mock_open, read_data="ID,Titulo,Genero,Duracion_min\n1,Matrix,Acción,120\n")
+    @patch(
+        "builtins.open",
+        new_callable=mock_open,
+        read_data="ID,Titulo,Genero,Duracion_min\n1,Matrix,Acción,120\n",
+    )
     @patch("peliculas.pausar")
     @patch("os.path.exists", return_value=True)
     def test_listar_peliculas(self, mock_exists, mock_pausar, mock_file):
         peliculas.listar_peliculas()
-        mock_file.assert_called_once_with('peliculas.csv', mode='r', newline='', encoding='utf-8')
+        mock_file.assert_called_once_with(
+            "peliculas.csv", mode="r", newline="", encoding="utf-8"
+        )
 
     # --- Prueba de actualizar película ---
-    @patch("builtins.input", side_effect=["1", "Matrix Reloaded", "Ciencia Ficción", "150"])
-    @patch("builtins.open", new_callable=mock_open, read_data="ID,Titulo,Genero,Duracion_min\n1,Matrix,Acción,120\n")
+    @patch(
+        "builtins.input", side_effect=["1", "Matrix Reloaded", "Ciencia Ficción", "150"]
+    )
+    @patch(
+        "builtins.open",
+        new_callable=mock_open,
+        read_data="ID,Titulo,Genero,Duracion_min\n1,Matrix,Acción,120\n",
+    )
     @patch("peliculas.pausar")
     def test_actualizar_pelicula(self, mock_pausar, mock_file, mock_input):
         peliculas.actualizar_pelicula()
@@ -45,7 +63,11 @@ class TestPeliculas(unittest.TestCase):
 
     # --- Prueba de eliminar película ---
     @patch("builtins.input", side_effect=["1"])
-    @patch("builtins.open", new_callable=mock_open, read_data="ID,Titulo,Genero,Duracion_min\n1,Matrix,Acción,120\n")
+    @patch(
+        "builtins.open",
+        new_callable=mock_open,
+        read_data="ID,Titulo,Genero,Duracion_min\n1,Matrix,Acción,120\n",
+    )
     @patch("peliculas.pausar")
     def test_eliminar_pelicula(self, mock_pausar, mock_file, mock_input):
         peliculas.eliminar_pelicula()

@@ -1,18 +1,27 @@
 import unittest
-from unittest.mock import patch, mock_open
-import io
-import csv
-import os
+from unittest.mock import mock_open, patch
+
 import funciones
 
 
 class TestFunciones(unittest.TestCase):
-
     def setUp(self):
         # Datos de ejemplo
         self.funciones_mock = [
-            {"id_funcion": "F1", "id_pelicula": "P1", "sala": "Sala 1", "hora": "10:00", "asientos_disponibles": "50"},
-            {"id_funcion": "F2", "id_pelicula": "P2", "sala": "Sala 2", "hora": "12:00", "asientos_disponibles": "30"},
+            {
+                "id_funcion": "F1",
+                "id_pelicula": "P1",
+                "sala": "Sala 1",
+                "hora": "10:00",
+                "asientos_disponibles": "50",
+            },
+            {
+                "id_funcion": "F2",
+                "id_pelicula": "P2",
+                "sala": "Sala 2",
+                "hora": "12:00",
+                "asientos_disponibles": "30",
+            },
         ]
 
     # ------------------- validar_texto -------------------
@@ -41,7 +50,11 @@ class TestFunciones(unittest.TestCase):
 
     # ------------------- cargar_funciones -------------------
 
-    @patch("builtins.open", new_callable=mock_open, read_data="id_funcion,id_pelicula,sala,hora,asientos_disponibles\nF1,P1,Sala 1,10:00,50\n")
+    @patch(
+        "builtins.open",
+        new_callable=mock_open,
+        read_data="id_funcion,id_pelicula,sala,hora,asientos_disponibles\nF1,P1,Sala 1,10:00,50\n",
+    )
     @patch("os.path.exists", return_value=True)
     def test_cargar_funciones(self, mock_exists, mock_file):
         resultado = funciones.cargar_funciones()
@@ -58,10 +71,14 @@ class TestFunciones(unittest.TestCase):
     @patch("builtins.open", new_callable=mock_open)
     def test_guardar_funcion_escribe_csv(self, mock_file):
         funciones.guardar_funcion(self.funciones_mock)
-        mock_file.assert_called_once_with("funciones.csv", "w", newline="", encoding="utf-8")
+        mock_file.assert_called_once_with(
+            "funciones.csv", "w", newline="", encoding="utf-8"
+        )
         handle = mock_file()
         # Verificar que se haya escrito la cabecera
-        handle.write.assert_any_call("id_funcion,id_pelicula,sala,hora,asientos_disponibles\r\n")
+        handle.write.assert_any_call(
+            "id_funcion,id_pelicula,sala,hora,asientos_disponibles\r\n"
+        )
 
     # ------------------- ver_funciones -------------------
 
@@ -76,6 +93,7 @@ class TestFunciones(unittest.TestCase):
         # Verifica que haya impreso una tabla Rich
         args, _ = mock_print.call_args
         from rich.table import Table
+
         assert isinstance(args[0], Table)
         # No debería mostrar mensaje de error
         for call in mock_print.call_args_list:

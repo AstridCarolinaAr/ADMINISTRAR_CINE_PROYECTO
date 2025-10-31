@@ -5,7 +5,6 @@ from rich import box
 from rich.panel import Panel
 from rich.table import Table
 from rich.console import Console
-import pyfiglet
 
 console = Console()
 
@@ -16,10 +15,6 @@ console.print(
         padding=(1, 5),
     )
 )
-
-titulo = pyfiglet.figlet_format("GESTIÓN DE PELÍCULAS", font="slant")
-print(titulo)
-console.print(f"[bold blue]{titulo}[/bold blue]")
 
 # Funciones utilitarias
 
@@ -47,41 +42,50 @@ def agregar_pelicula():
     limpiar_pantalla()
     console.print(Panel("[bold cyan]Agregar nueva película[/bold cyan]", border_style="cyan"))
 
-# Validar que el ID solo contenga números
+    # Validar que el ID solo contenga números
     while True:
-        id = input("digita el ID: ").strip()
+        id = input("Digita el ID: ").strip()
         if id.isdigit():
+
+# se verifica si el ID ya existe
+            if os.path.exists('peliculas.csv'):
+                with open('peliculas.csv', mode='r', newline='', encoding='utf-8') as archivo:
+                    reader = csv.DictReader(archivo)
+                    ids_existentes = [fila['ID'] for fila in reader]
+                    if id in ids_existentes:
+                        console.print("[red]Ese ID ya existe. Por favor ingresa uno diferente.[/red]")
+                        continue   #vuelve a pedir el ID
             break
         console.print("[red]El ID debe contener solamente números. Inténtalo de nuevo.[/red]")
-#Validar título no vacío
+
+# Validar título no vacío
     while True:
-        titulo = input("Titulo de la pelicula: ").strip()
+        titulo = input("Título de la película: ").strip()
         if titulo:
             break
         console.print("[red]El título NO PUEDE estar vacío.[/red]")
 
-#Validar género no vacío
+    # Validar género no vacío
     while True:
-        genero = input("Género de la pelicula: ").strip()
+        genero = input("Género de la película: ").strip()
         if genero:
             break
         console.print("[red]El género no puede estar vacío.[/red]")
 
-# Validar duración numérica y positiva
+    # Validar duración numérica y positiva
     while True:
         duracion = input("Duración (min): ").strip()
         if duracion.isdigit() and int(duracion) > 0:
             break
         console.print("[red]La duración debe ser un número positivo.[/red]")
 
-#Guardar en CSV
+    # Guardar en CSV
     with open('peliculas.csv', mode='a', newline='', encoding='utf-8') as archivo:
         writer = csv.writer(archivo)
         writer.writerow([id, titulo, genero, duracion])
 
     console.print(f"[bold green]Película '{titulo}' agregada correctamente.[/bold green]")
     pausar()
-
 
 def listar_peliculas():
     limpiar_pantalla()
@@ -221,7 +225,7 @@ def menu_peliculas():
             show_lines=True,
         )
         tabla.add_column("N°", justify="center", style="yellow")
-        tabla.add_column("OPCIÓN", justify="left", style="white")
+        tabla.add_column("OPCIoNES", justify="left", style="white")
 
         for i, texto in enumerate(opciones):
             if i == seleccionado:

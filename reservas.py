@@ -4,10 +4,17 @@ import os
 
 from rich.console import Console
 
+from funciones import cargar_funciones
+
 console = Console()
 # Configuración de la sala
 filas = ["A", "B", "C", "D", "E"]
 columnas = ["1", "2", "3", "4", "5", "6"]
+
+
+def validar_id_funcion(id_funcion):
+    funciones = cargar_funciones()
+    return any(f["id_funcion"] == id_funcion for f in funciones)
 
 
 def cargar_ocupados():
@@ -58,6 +65,15 @@ def seleccionar_asientos(stdscr):
 
     while True:
         stdscr.clear()
+        alto, ancho = stdscr.getmaxyx()
+        if alto < 15 or ancho < 60:
+            stdscr.addstr(
+                3, 2, "La ventana es demasiado pequeña para mostrar los asientos."
+            )
+            stdscr.addstr(5, 2, "Amplía la terminal y vuelve a intentarlo.")
+            stdscr.refresh()
+            stdscr.getch()
+            return []
         stdscr.addstr(
             1,
             2,
@@ -68,8 +84,8 @@ def seleccionar_asientos(stdscr):
         for i, fila in enumerate(filas):
             for j, col in enumerate(columnas):
                 asiento = f"{fila}{col}"
-                y = 3 + i * 3
-                x = 5 + j * 10
+                y = 2 + i * 2
+                x = 4 + j * 6
 
                 if asiento in ocupados:
                     color = curses.color_pair(2)
@@ -82,7 +98,7 @@ def seleccionar_asientos(stdscr):
 
                 stdscr.attron(color)
                 stdscr.addstr(y, x, "┌────┐")
-                stdscr.addstr(y + 1, x, f"│ {asiento} │")
+                stdscr.addstr(y + 1, x, f"│{asiento.center(2)}│")
                 stdscr.addstr(y + 2, x, "└────┘")
                 stdscr.attroff(color)
 
@@ -120,8 +136,23 @@ def main():
         print("\nNo se seleccionaron asientos. Reserva cancelada.")
 
 
+# def ejecutar_reserva(nombre_cliente, id_funcion):
+#   import curses
+
+
+#  asientos = curses.wrapper(seleccionar_asientos)
+# if asientos:
+#    guardar_reserva(nombre_cliente, id_funcion, asientos)
+#   return asientos
+# else:
+#   return []
 def ejecutar_reserva(nombre_cliente, id_funcion):
-    import curses
+    funciones = cargar_funciones()
+    if not any(f["id_funcion"] == id_funcion for f in funciones):
+        console.print(
+            f"[red]La función con ID '{id_funcion}' no existe. Reserva cancelada.[/red]"
+        )
+        return []
 
     asientos = curses.wrapper(seleccionar_asientos)
     if asientos:

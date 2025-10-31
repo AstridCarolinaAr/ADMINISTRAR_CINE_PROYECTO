@@ -1,0 +1,34 @@
+[
+    {
+        "id_reserva": 1,
+        "nombre_cliente": "ana",
+        "id_funcion": "1",
+        "asientos": [
+            "B1",
+            "B2",
+            "B3"
+        ],
+        "cantidad_boletos": 3
+    },
+    {
+        "id_reserva": 2,
+        "nombre_cliente": "ana",
+        "id_funcion": "2",
+        "asientos": [
+            "C2",
+            "C3",
+            "C1"
+        ],
+        "cantidad_boletos": 3
+    },
+    {
+        "id_reserva": 3,
+        "nombre_cliente": "maria",
+        "id_funcion": "2",
+        "asientos": [
+            "A6",
+            "B6"
+        ],
+        "cantidad_boletos": 2
+    }
+]

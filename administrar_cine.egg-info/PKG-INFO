@@ -1,0 +1,10 @@
+Metadata-Version: 2.4
+Name: administrar-cine
+Version: 0.1.0
+Summary: Sistema para administrar reservas de cine
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Provides-Extra: dev
+Requires-Dist: rich; extra == "dev"
+Requires-Dist: ruff; extra == "dev"
+Requires-Dist: pytest; extra == "dev"

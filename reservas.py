@@ -2,9 +2,12 @@ import curses
 import json
 import os
 
+from rich import box
 from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
 
-from funciones import cargar_funciones
+from funciones import cargar_funciones, ver_funciones
 
 console = Console()
 # Configuración de la sala
@@ -15,6 +18,125 @@ columnas = ["1", "2", "3", "4", "5", "6"]
 def validar_id_funcion(id_funcion):
     funciones = cargar_funciones()
     return any(f["id_funcion"] == id_funcion for f in funciones)
+
+
+# Función para limpiar pantalla
+def limpiar_pantalla():
+    os.system("cls")
+
+
+# Función para mostrar el título
+def mostrar_titulo(titulo: str):
+    console.print(
+        Panel(
+            f"[bold white on dark_blue]{titulo.upper()}[/bold white on dark_blue]",
+            border_style="dark_red",
+            expand=False,
+        )
+    )
+
+
+# Función para pausar (temporal)
+def pausar_pantalla():
+    console.print("\n[dim]Presiona Enter para continuar...[/dim]", end="")
+    input()
+
+
+def crear_reserva() -> None:
+    limpiar_pantalla()
+    mostrar_titulo("Crear Reserva")
+
+    console.print(
+        "[bold black on gold1]Ingresa los datos para la reserva:[/bold black on gold1]\n"
+    )
+    nombre = input("Nombre del cliente: ")
+    funciones = cargar_funciones()
+
+    if not funciones:
+        console.print("[red]No hay funciones disponibles para reservar.[/red]")
+        pausar_pantalla()
+        return
+
+        # Mostrar funciones disponibles antes de pedir el ID
+    console.print("\n[bold yellow]Funciones disponibles:[/bold yellow]")
+    ver_funciones(funciones)
+
+    # Validar ID de función
+    while True:
+        id_funcion = input("\nID de función: ").strip()
+        if any(f["id_funcion"] == id_funcion for f in funciones):
+            break
+        console.print(
+            f"[red]La función con ID '{id_funcion}' no existe. Intenta de nuevo.[/red]"
+        )
+
+    # Selección de asientos
+    asientos = ejecutar_reserva(nombre, id_funcion)
+
+    limpiar_pantalla()
+    mostrar_titulo("Resultado de la Reserva")
+    if asientos:
+        console.print("[bold green]Reserva guardada con éxito.[/bold green]")
+        console.print(f"Asientos seleccionados: [white]{', '.join(asientos)}[/white]")
+    else:
+        console.print(
+            "[bold red]No se seleccionaron asientos. Reserva cancelada.[/bold red]"
+        )
+
+    pausar_pantalla()
+
+
+def ver_reservas() -> None:
+    limpiar_pantalla()
+    mostrar_titulo("Reservas por Función")
+
+    ruta = "reservas.json"
+    if not os.path.exists(ruta):
+        console.print("[bold red]No hay reservas registradas.[/bold red]")
+        pausar_pantalla()
+        return
+
+    with open(ruta, "r", encoding="utf-8") as f:
+        reservas = json.load(f)
+
+    if not reservas:
+        console.print("[bold red]No hay reservas registradas.[/bold red]")
+        pausar_pantalla()
+        return
+
+    # Agrupar reservas por función
+    funciones = {}
+    for reserva in reservas:
+        id_funcion = reserva["id_funcion"]
+        if id_funcion not in funciones:
+            funciones[id_funcion] = []
+        funciones[id_funcion].append(reserva)
+
+    # Mostrar tabla por cada función
+    for id_funcion, grupo in funciones.items():
+        console.print(f"\n[gold1 on dark_red]Función: {id_funcion}[/gold1 on dark_red]")
+        tabla = Table(
+            show_header=True,
+            header_style="bold black on gold1",
+            box=box.SIMPLE,
+            border_style="bold dark_blue",
+        )
+        tabla.add_column("ID Reserva", justify="center")
+        tabla.add_column("Cliente", justify="left")
+        tabla.add_column("Boletos", justify="center")
+        tabla.add_column("Asientos", justify="left")
+
+        for r in grupo:
+            tabla.add_row(
+                str(r["id_reserva"]),
+                r["nombre_cliente"],
+                str(r["cantidad_boletos"]),
+                ", ".join(r["asientos"]),
+            )
+
+        console.print(tabla)
+
+    pausar_pantalla()
 
 
 def cargar_ocupados():
@@ -136,16 +258,6 @@ def main():
         print("\nNo se seleccionaron asientos. Reserva cancelada.")
 
 
-# def ejecutar_reserva(nombre_cliente, id_funcion):
-#   import curses
-
-
-#  asientos = curses.wrapper(seleccionar_asientos)
-# if asientos:
-#    guardar_reserva(nombre_cliente, id_funcion, asientos)
-#   return asientos
-# else:
-#   return []
 def ejecutar_reserva(nombre_cliente, id_funcion):
     funciones = cargar_funciones()
     if not any(f["id_funcion"] == id_funcion for f in funciones):

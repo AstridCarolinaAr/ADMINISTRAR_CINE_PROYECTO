@@ -30,5 +30,42 @@
             "B6"
         ],
         "cantidad_boletos": 2
+    },
+    {
+        "id_reserva": 4,
+        "nombre_cliente": "pepito",
+        "id_funcion": "3",
+        "asientos": [
+            "E1",
+            "E2"
+        ],
+        "cantidad_boletos": 2
+    },
+    {
+        "id_reserva": 5,
+        "nombre_cliente": "7",
+        "id_funcion": "2",
+        "asientos": [
+            "A1"
+        ],
+        "cantidad_boletos": 1
+    },
+    {
+        "id_reserva": 6,
+        "nombre_cliente": "lol",
+        "id_funcion": "3",
+        "asientos": [
+            "A2"
+        ],
+        "cantidad_boletos": 1
+    },
+    {
+        "id_reserva": 7,
+        "nombre_cliente": "jjgh2",
+        "id_funcion": "1",
+        "asientos": [
+            "A4"
+        ],
+        "cantidad_boletos": 1
     }
 ]

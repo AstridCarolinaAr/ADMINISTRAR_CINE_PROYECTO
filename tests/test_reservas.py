@@ -1,18 +1,16 @@
-import unittest
-from unittest.mock import patch, mock_open, MagicMock
-import json
 import os
 import sys
+import unittest
+from unittest.mock import MagicMock, mock_open, patch
 
 # 💡 Simulación de curses para evitar error en Windows durante las pruebas
-import types
 sys.modules["curses"] = MagicMock()
 sys.modules["curses.wrapper"] = MagicMock()
 
-# Añade la raíz del proyecto al path
+# Agregar la carpeta raíz del proyecto al path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-import reservas
+import reservas  # noqa: E402
 
 
 class TestReservas(unittest.TestCase):

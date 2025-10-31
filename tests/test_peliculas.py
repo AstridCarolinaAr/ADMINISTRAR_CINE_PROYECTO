@@ -1,9 +1,10 @@
+import os
+import sys
 import unittest
-from unittest.mock import patch, mock_open
-import sys, os
+from unittest.mock import mock_open, patch
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import Peliculas
-
 
 
 class TestPeliculas(unittest.TestCase):

@@ -1,13 +1,15 @@
 import curses
 import json
 import os
+import re
 
 from rich import box
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from funciones import cargar_funciones, ver_funciones
+from funciones import cargar_funciones, guardar_funcion, ver_funciones
+from Peliculas import cargar_peliculas_dict
 
 console = Console()
 # Configuración de la sala
@@ -53,34 +55,39 @@ def crear_reserva() -> None:
 
     # Validar nombre del cliente (sin números)
     while True:
-        nombre = input("Nombre del cliente: ").strip()
+        nombre = input("Nombre del cliente (o '-' para salir): ").strip()
+        if nombre == "-":
+            return
         if not nombre:
-            console.print("[red]El nombre no puede estar vacío.[/red]")
+            console.print("[yellow]El nombre no puede estar vacío.[/yellow]")
             continue
         if not re.match(r"^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$", nombre):
             console.print(
-                "[red]El nombre solo puede contener letras y espacios. No se permiten números ni símbolos.[/red]"
+                "[yellow]El nombre solo puede contener letras y espacios. No se permiten números ni símbolos.[/yellow]"
             )
             continue
         break
     funciones = cargar_funciones()
+    peliculas = cargar_peliculas_dict()
 
     if not funciones:
-        console.print("[red]No hay funciones disponibles para reservar.[/red]")
+        console.print("[yellow]No hay funciones disponibles para reservar.[/yellow]")
         pausar_pantalla()
         return
 
         # Mostrar funciones disponibles antes de pedir el ID
     console.print("\n[bold yellow]Funciones disponibles:[/bold yellow]")
-    ver_funciones(funciones)
+    ver_funciones(funciones, peliculas)
 
     # Validar ID de función
     while True:
-        id_funcion = input("\nID de función: ").strip()
+        id_funcion = input("\nID de función (o '-' para salir): ").strip()
+        if id_funcion == "-":
+            return
         if any(f["id_funcion"] == id_funcion for f in funciones):
             break
         console.print(
-            f"[red]La función con ID '{id_funcion}' no existe. Intenta de nuevo.[/red]"
+            f"[yellow]La función con ID '{id_funcion}' no existe. Intenta de nuevo.[/yellow]"
         )
 
     # Selección de asientos
@@ -89,11 +96,11 @@ def crear_reserva() -> None:
     limpiar_pantalla()
     mostrar_titulo("Resultado de la Reserva")
     if asientos:
-        console.print("[bold green]Reserva guardada con éxito.[/bold green]")
+        console.print("[bold yellow]Reserva guardada con éxito.[/bold yellow]")
         console.print(f"Asientos seleccionados: [white]{', '.join(asientos)}[/white]")
     else:
         console.print(
-            "[bold red]No se seleccionaron asientos. Reserva cancelada.[/bold red]"
+            "[bold yellow]No se seleccionaron asientos. Reserva cancelada.[/bold yellow]"
         )
 
     pausar_pantalla()
@@ -105,7 +112,7 @@ def ver_reservas() -> None:
 
     ruta = "reservas.json"
     if not os.path.exists(ruta):
-        console.print("[bold red]No hay reservas registradas.[/bold red]")
+        console.print("[bold yellow]No hay reservas registradas.[/bold yellow]")
         pausar_pantalla()
         return
 
@@ -113,7 +120,7 @@ def ver_reservas() -> None:
         reservas = json.load(f)
 
     if not reservas:
-        console.print("[bold red]No hay reservas registradas.[/bold red]")
+        console.print("[bold yellow]No hay reservas registradas.[/bold yellow]")
         pausar_pantalla()
         return
 
@@ -130,14 +137,15 @@ def ver_reservas() -> None:
         console.print(f"\n[gold1 on dark_red]Función: {id_funcion}[/gold1 on dark_red]")
         tabla = Table(
             show_header=True,
-            header_style="bold black on gold1",
-            box=box.SIMPLE,
+            header_style="bold bright_white",
+            box=box.ROUNDED,
             border_style="bold dark_blue",
+            show_lines=True,
         )
-        tabla.add_column("ID Reserva", justify="center")
-        tabla.add_column("Cliente", justify="left")
-        tabla.add_column("Boletos", justify="center")
-        tabla.add_column("Asientos", justify="left")
+        tabla.add_column("ID Reserva", justify="center", style="orange3")
+        tabla.add_column("Cliente", justify="left", style="bold grey70")
+        tabla.add_column("Boletos", justify="center", style="bold grey70")
+        tabla.add_column("Asientos", justify="left", style="bold grey70")
 
         for r in grupo:
             tabla.add_row(
@@ -185,7 +193,7 @@ def guardar_reserva(nombre_cliente, id_funcion, asientos):
         json.dump(reservas, f, indent=4, ensure_ascii=False)
 
 
-def seleccionar_asientos(stdscr):
+def seleccionar_asientos(stdscr, mapa):
     curses.curs_set(0)
     curses.start_color()
     curses.init_pair(1, curses.COLOR_BLACK, curses.COLOR_GREEN)  # Disponible
@@ -193,36 +201,45 @@ def seleccionar_asientos(stdscr):
     curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_YELLOW)  # Cursor
     curses.init_pair(4, curses.COLOR_WHITE, curses.COLOR_GREEN)  # Seleccionado
 
+    def clave(asiento):
+        col = re.search(r"[A-Z]+", asiento).group()
+        fila = int(re.search(r"\d+", asiento).group())
+        return (fila, col)
+
+    asientos_ordenados = sorted(mapa.keys(), key=clave)
+    #  Extraer filas y columnas en orden correcto
+    filas = sorted({int(re.search(r"\d+", a).group()) for a in asientos_ordenados})
+    columnas = sorted(
+        {re.search(r"[A-Z]+", a).group() for a in asientos_ordenados},
+        key=lambda c: (len(c), c),
+    )
     fila_idx = 0
     col_idx = 0
     seleccionados = []
-    ocupados = cargar_ocupados()
 
     while True:
         stdscr.clear()
-        alto, ancho = stdscr.getmaxyx()
-        if alto < 15 or ancho < 60:
-            stdscr.addstr(
-                3, 2, "La ventana es demasiado pequeña para mostrar los asientos."
-            )
-            stdscr.addstr(5, 2, "Amplía la terminal y vuelve a intentarlo.")
-            stdscr.refresh()
-            stdscr.getch()
-            return []
         stdscr.addstr(
             1,
             2,
             " SELECCIONA TUS ASIENTOS (ENTER para elegir, Q para salir)",
             curses.A_BOLD,
         )
+        stdscr.addstr(
+            2,
+            2,
+            " Verde=Libre | Rojo=Ocupado | Amarillo=Cursor | Verde claro=Seleccionado",
+        )
 
         for i, fila in enumerate(filas):
             for j, col in enumerate(columnas):
-                asiento = f"{fila}{col}"
-                y = 2 + i * 2
+                asiento = f"{col}{fila}"
+                if asiento not in mapa:
+                    continue
+                y = 4 + i * 2
                 x = 4 + j * 6
-
-                if asiento in ocupados:
+                estado = mapa.get(asiento, "libre")
+                if estado == "ocupado":
                     color = curses.color_pair(2)
                 elif i == fila_idx and j == col_idx:
                     color = curses.color_pair(3)
@@ -232,11 +249,8 @@ def seleccionar_asientos(stdscr):
                     color = curses.color_pair(1)
 
                 stdscr.attron(color)
-                stdscr.addstr(y, x, "┌────┐")
-                stdscr.addstr(y + 1, x, f"│{asiento.center(2)}│")
-                stdscr.addstr(y + 2, x, "└────┘")
+                stdscr.addstr(y, x, f"[{asiento}]")
                 stdscr.attroff(color)
-
         stdscr.refresh()
         key = stdscr.getch()
 
@@ -249,8 +263,11 @@ def seleccionar_asientos(stdscr):
         elif key == curses.KEY_RIGHT and col_idx < len(columnas) - 1:
             col_idx += 1
         elif key == ord("\n"):
-            asiento_actual = f"{filas[fila_idx]}{columnas[col_idx]}"
-            if asiento_actual not in ocupados and asiento_actual not in seleccionados:
+            asiento_actual = f"{columnas[col_idx]}{filas[fila_idx]}"
+            if (
+                mapa.get(asiento_actual) == "libre"
+                and asiento_actual not in seleccionados
+            ):
                 seleccionados.append(asiento_actual)
         elif key in [ord("q"), ord("Q")]:
             break
@@ -261,7 +278,8 @@ def seleccionar_asientos(stdscr):
 def main():
     nombre = input("Nombre del cliente: ")
     id_funcion = input("ID de función (simulado): ")
-    asientos = curses.wrapper(seleccionar_asientos)
+    ocupados = []
+    asientos = curses.wrapper(lambda stdscr: seleccionar_asientos(stdscr, ocupados))
     if asientos:
         guardar_reserva(nombre, id_funcion, asientos)
         console.print(
@@ -271,17 +289,55 @@ def main():
         print("\nNo se seleccionaron asientos. Reserva cancelada.")
 
 
-def ejecutar_reserva(nombre_cliente, id_funcion):
+def ejecutar_reserva(nombre_cliente: str, id_funcion: str) -> list:
     funciones = cargar_funciones()
-    if not any(f["id_funcion"] == id_funcion for f in funciones):
+    funcion = next((f for f in funciones if f["id_funcion"] == id_funcion), None)
+
+    if not funcion:
         console.print(
-            f"[red]La función con ID '{id_funcion}' no existe. Reserva cancelada.[/red]"
+            f"[yellow]La función con ID '{id_funcion}' no existe. Reserva cancelada.[/yellow]"
         )
         return []
 
-    asientos = curses.wrapper(seleccionar_asientos)
-    if asientos:
-        guardar_reserva(nombre_cliente, id_funcion, asientos)
-        return asientos
-    else:
+    mapa = funcion.get("asientos", {})
+    disponibles = [k for k, v in mapa.items() if v == "libre"]
+
+    if not disponibles:
+        console.print(
+            "[yellow]No quedan asientos disponibles para esta función.[/yellow]"
+        )
         return []
+
+    # Mostrar interfaz visual para seleccionar
+    seleccionados = curses.wrapper(lambda stdscr: seleccionar_asientos(stdscr, mapa))
+
+    if not seleccionados:
+        console.print(
+            "[yellow]No se seleccionaron asientos. Reserva cancelada.[/yellow]"
+        )
+        return []
+
+    seleccion_valida = []
+    for asiento in seleccionados:
+        if mapa.get(asiento) == "libre":
+            seleccion_valida.append(asiento)
+        else:
+            console.print(f"[yellow]Asiento inválido o ya ocupado: {asiento}[/yellow]")
+
+    if not seleccion_valida:
+        console.print(
+            "[yellow]Ninguno de los asientos seleccionados está disponible.[/yellow]"
+        )
+        return []
+
+    # Marcar como ocupados
+    for asiento in seleccion_valida:
+        mapa[asiento] = "ocupado"
+
+    funcion["asientos"] = mapa
+    funcion["asientos_disponibles"] = sum(1 for v in mapa.values() if v == "libre")
+
+    guardar_funcion(funciones)
+    guardar_reserva(nombre_cliente, id_funcion, seleccion_valida)
+
+    return seleccion_valida

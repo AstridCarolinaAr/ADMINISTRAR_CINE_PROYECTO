@@ -1,50 +1,58 @@
 [
     {
         "id_reserva": 1,
-        "nombre_cliente": "ana",
-        "id_funcion": "1",
+        "nombre_cliente": "juan",
+        "id_funcion": "8525",
         "asientos": [
-            "B1",
-            "B2",
-            "B3"
+            "D2",
+            "D4",
+            "C4",
+            "A6",
+            "A3",
+            "C3",
+            "B3",
+            "A2",
+            "B2"
         ],
-        "cantidad_boletos": 3
+        "cantidad_boletos": 9
     },
     {
         "id_reserva": 2,
-        "nombre_cliente": "ana",
-        "id_funcion": "2",
+        "nombre_cliente": "juan",
+        "id_funcion": "3",
         "asientos": [
-            "C2",
-            "C3",
-            "C1"
+            "A1"
         ],
-        "cantidad_boletos": 3
+        "cantidad_boletos": 1
     },
     {
         "id_reserva": 3,
-        "nombre_cliente": "maria",
+        "nombre_cliente": "lola",
         "id_funcion": "2",
         "asientos": [
-            "A6",
-            "B6"
+            "A1",
+            "A2",
+            "A3",
+            "A4"
         ],
-        "cantidad_boletos": 2
+        "cantidad_boletos": 4
     },
     {
         "id_reserva": 4,
-        "nombre_cliente": "pepito",
-        "id_funcion": "3",
+        "nombre_cliente": "lola",
+        "id_funcion": "7",
         "asientos": [
-            "E1",
-            "E2"
+            "A2",
+            "B2",
+            "C2",
+            "D2"
         ],
-        "cantidad_boletos": 2
+        "cantidad_boletos": 4
     },
     {
         "id_reserva": 5,
-        "nombre_cliente": "7",
-        "id_funcion": "2",
+        "nombre_cliente": "lola",
+        "id_funcion": "1",
         "asientos": [
             "A1"
         ],
@@ -52,8 +60,8 @@
     },
     {
         "id_reserva": 6,
-        "nombre_cliente": "lol",
-        "id_funcion": "3",
+        "nombre_cliente": "lola",
+        "id_funcion": "FUNC2",
         "asientos": [
             "A2"
         ],
@@ -61,20 +69,23 @@
     },
     {
         "id_reserva": 7,
-        "nombre_cliente": "jjgh2",
-        "id_funcion": "1",
+        "nombre_cliente": "LOLA",
+        "id_funcion": "FUNC2",
         "asientos": [
-            "A4"
+            "A1"
         ],
         "cantidad_boletos": 1
     },
     {
         "id_reserva": 8,
-        "nombre_cliente": "lo",
-        "id_funcion": "1",
+        "nombre_cliente": "LALA",
+        "id_funcion": "2",
         "asientos": [
-            "A5"
+            "B1",
+            "B2",
+            "B3",
+            "B4"
         ],
-        "cantidad_boletos": 1
+        "cantidad_boletos": 4
     }
 ]

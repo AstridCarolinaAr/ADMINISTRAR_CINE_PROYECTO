@@ -85,7 +85,9 @@ def inicializar_csv():
         with open("peliculas.csv", mode="w", newline="", encoding="utf-8") as archivo:
             writer = csv.writer(archivo)
             writer.writerow(["ID", "Titulo", "Genero", "Duracion_min"])
-        console.print("[green]Archivo 'peliculas.csv' se ha creado con éxito.[/green]")
+        console.print(
+            "[yellow]Archivo 'peliculas.csv' se ha creado con éxito.[/yellow]"
+        )
 
 
 def agregar_pelicula():
@@ -96,35 +98,34 @@ def agregar_pelicula():
 
     try:
         # ID
-        while True:
-            id_ = input("Digita el ID: ").strip()
-            if not id_.isdigit():
-                console.print(
-                    "[red]El ID debe contener solamente números. Inténtalo de nuevo.[/red]"
-                )
-                continue
-            # verificar duplicado
-            if os.path.exists("peliculas.csv"):
-                ok, msg = verificar_encabezados_csv(
-                    "peliculas.csv", ["ID", "Titulo", "Genero", "Duracion_min"]
-                )
-                if not ok:
-                    console.print(f"[red]{msg}[/red]")
-                    return
-                with open(
-                    "peliculas.csv", mode="r", newline="", encoding="utf-8"
-                ) as archivo:
-                    reader = csv.DictReader(archivo)
-                    if any((fila.get("ID") or "").strip() == id_ for fila in reader):
-                        console.print(
-                            "[red]Ese ID ya existe. Por favor ingresa uno diferente.[/red]"
-                        )
-                        continue
-            break
+        if os.path.exists("peliculas.csv"):
+            with open(
+                "peliculas.csv", mode="r", newline="", encoding="utf-8"
+            ) as archivo:
+                reader = csv.DictReader(archivo)
+                ids = [int(fila["ID"]) for fila in reader if fila["ID"].isdigit()]
+                if ids:
+                    id_ = str(max(ids) + 1)
+                else:
+                    id_ = "1"
+        else:
+            id_ = "1"
+        console.print(f"[cyan]ID de película asignado automáticamente: {id_}[/cyan]")
 
-        titulo = validar_texto(input("Título de la película: "), "Título", max_len=120)
-        genero = validar_texto(input("Género de la película: "), "Género", max_len=60)
-        duracion = validar_duracion(input("Duración (min): "), "Duración", 1, 600)
+        titulo_input = input("Título de la película (o '-' para salir): ")
+        if titulo_input == "-":
+            return
+        titulo = validar_texto(titulo_input, "Título", max_len=120)
+
+        genero_input = input("Género de la película (o '-' para salir): ")
+        if genero_input == "-":
+            return
+        genero = validar_texto(genero_input, "Género", max_len=60)
+
+        duracion_input = input("Duración (min) (o '-' para salir): ")
+        if duracion_input == "-":
+            return
+        duracion = validar_duracion(duracion_input, "Duración", 1, 600)
 
         # Guardar (usar dict para safe write)
         row = {
@@ -146,11 +147,11 @@ def agregar_pelicula():
         )
 
         console.print(
-            f"[bold green]Película '{titulo}' agregada correctamente.[/bold green]"
+            f"[bold yellow]Película '{titulo}' agregada correctamente.[/bold yellow]"
         )
         pausar()
-    except ValueError as e:
-        console.print(f"[red]{e}[/red]")
+    except ValueError:
+        console.print("[yellow]Error: valor inválido[/yellow]")
     except Exception as e:
         console.print(f"[red]Error al guardar la película: {e}[/red]")
 
@@ -161,17 +162,19 @@ def listar_peliculas():
         Panel("[bold yellow]Listado de películas[/bold yellow]", border_style="yellow")
     )
 
-    ok, msg = verificar_encabezados_csv(
-        "peliculas.csv", ["ID", "Titulo", "Genero", "Duracion_min"]
-    )
-    if not ok:
-        console.print(f"[red]{msg}[/red]")
-        pausar()
-        return
-
     try:
         with open("peliculas.csv", mode="r", newline="", encoding="utf-8") as archivo:
             reader = csv.DictReader(archivo)
+
+            if not reader.fieldnames or [
+                h.strip().lower() for h in reader.fieldnames
+            ] != [e.lower() for e in ["ID", "Titulo", "Genero", "Duracion_min"]]:
+                console.print(
+                    "[yellow]Encabezados inesperados en peliculas.csv[/yellow]"
+                )
+                pausar()
+                return
+
             filas = []
             for fila in reader:
                 # ignorar filas malformadas
@@ -185,21 +188,31 @@ def listar_peliculas():
                         for k in ["ID", "Titulo", "Genero", "Duracion_min"]
                     }
                 )
+    except FileNotFoundError:
+        console.print("[yellow]El archivo peliculas.csv no existe.[/yellow]")
+        pausar()
+        return
     except Exception as e:
         console.print(f"[red]Error leyendo el archivo: {e}[/red]")
         pausar()
         return
 
     if not filas:
-        console.print("[red]No hay películas registradas.[/red]")
+        console.print("[yellow]No hay películas registradas.[/yellow]")
         pausar()
         return
 
-    tabla = Table(show_header=True, header_style="bold magenta", box=box.ROUNDED)
-    tabla.add_column("ID", justify="center")
-    tabla.add_column("Título", justify="left")
-    tabla.add_column("Género", justify="center")
-    tabla.add_column("Duración (min)", justify="center")
+    tabla = Table(
+        show_header=True,
+        header_style="bold bright_white",
+        box=box.ROUNDED,
+        border_style="bold dark_blue",
+        show_lines=True,
+    )
+    tabla.add_column("ID", justify="center", style="orange3")
+    tabla.add_column("Título", justify="left", style="bold grey70")
+    tabla.add_column("Género", justify="center", style="bold grey70")
+    tabla.add_column("Duración (min)", justify="center", style="bold grey70")
 
     for fila in filas:
         tabla.add_row(fila["ID"], fila["Titulo"], fila["Genero"], fila["Duracion_min"])
@@ -218,8 +231,7 @@ def actualizar_pelicula():
         ).strip()
         if id_buscar.isdigit():
             break
-        console.print("[red]El ID debe contener solo números.[/red]")
-
+        console.print("[yellow]El ID debe contener solo números.[/yellow]")
     peliculas = []
     encontrado = False
 
@@ -261,11 +273,13 @@ def actualizar_pelicula():
             safe_write_csv(
                 "peliculas.csv", ["ID", "Titulo", "Genero", "Duracion_min"], peliculas
             )
-            console.print("[bold green]Película actualizada con éxito.[/bold green]")
+            console.print("[bold yellow]Película actualizada con éxito.[/bold yellow]")
         except Exception as e:
             console.print(f"[red]Error al guardar cambios: {e}[/red]")
     else:
-        console.print("[bold red]No se encontró una película con ese ID.[/bold red]")
+        console.print(
+            "[bold yellow]No se encontró una película con ese ID.[/bold yellow]"
+        )
     pausar()
 
 
@@ -299,16 +313,27 @@ def eliminar_pelicula():
         writer.writerows(peliculas)
 
     if eliminado:
-        console.print("[bold green]Película eliminada correctamente.[/bold green]")
+        console.print("[bold yellow]Película eliminada correctamente.[/bold yellow]")
     else:
         console.print(
-            "[bold red]No se encontró ninguna película con ese ID.[/bold red]"
+            "[bold yellow]No se encontró ninguna película con ese ID.[/bold yellow]"
         )
 
     pausar()
 
 
 # Menú interactivo
+
+
+def cargar_peliculas_dict():
+    peliculas = {}
+    if not os.path.exists("peliculas.csv"):
+        return peliculas
+    with open("peliculas.csv", mode="r", newline="", encoding="utf-8") as archivo:
+        reader = csv.DictReader(archivo)
+        for fila in reader:
+            peliculas[fila["ID"]] = fila["Titulo"]
+    return peliculas
 
 
 def menu_peliculas():
@@ -327,10 +352,12 @@ def menu_peliculas():
         limpiar_pantalla()
 
         tabla = Table(
-            title="[bold black on yellow]GESTIÓN DE PELÍCULAS[/bold black on yellow]",
+            title="[bold black on gold1]GESTIÓN DE PELÍCULAS[/bold black on gold1]",
             box=box.ROUNDED,
             border_style="bold dark_blue",
             show_lines=True,
+            title_style="bold bright_red",
+            header_style="bold bright_white",
         )
         tabla.add_column("N°", justify="center", style="orange3")
         tabla.add_column("OPCIONES", justify="left", style="bold grey70")
@@ -384,7 +411,7 @@ def buscar_peliculas_por_genero():
 
     # Validar existencia del archivo
     if not os.path.exists("peliculas.csv"):
-        console.print("[red]No existe el archivo 'peliculas.csv'.[/red]")
+        console.print("[yellow]No existe el archivo 'peliculas.csv'.[/yellow]")
         pausar()
         return
 
@@ -395,7 +422,7 @@ def buscar_peliculas_por_genero():
             expected = ["ID", "Titulo", "Genero", "Duracion_min"]
             if reader.fieldnames is None:
                 console.print(
-                    "[red]El archivo 'peliculas.csv' está vacío o malformado.[/red]"
+                    "[yellow]El archivo 'peliculas.csv' está vacío o malformado.[/yellow]"
                 )
                 pausar()
                 return
@@ -433,7 +460,7 @@ def buscar_peliculas_por_genero():
             continue
         if len(genero_buscar) > 50:
             console.print(
-                "[red]El género es demasiado largo. Usa menos de 50 caracteres.[/red]"
+                "[yellow]El género es demasiado largo. Usa menos de 50 caracteres.[/yellow]"
             )
             continue
         break
@@ -474,21 +501,22 @@ def buscar_peliculas_por_genero():
     # Mostrar resultados
     if not resultados:
         console.print(
-            f"[red]No se encontraron películas con el género exacto: '{genero_buscar}'[/red]"
+            f"[yellow]No se encontraron películas con el género exacto: '{genero_buscar}'[/yellow]"
         )
         pausar()
         return
 
     tabla = Table(
         show_header=True,
-        header_style="bold gold1",
+        header_style="bold bright_white",
         box=box.ROUNDED,
-        border_style="dark_blue",
+        border_style="bold dark_blue",
+        show_lines=True,
     )
-    tabla.add_column("ID", justify="center")
-    tabla.add_column("Título", justify="left")
-    tabla.add_column("Género", justify="center")
-    tabla.add_column("Duración (min)", justify="center")
+    tabla.add_column("ID", justify="center", style="orange3")
+    tabla.add_column("Título", justify="left", style="bold grey70")
+    tabla.add_column("Género", justify="center", style="bold grey70")
+    tabla.add_column("Duración (min)", justify="center", style="bold grey70")
 
     for fila in resultados:
         tabla.add_row(fila["ID"], fila["Titulo"], fila["Genero"], fila["Duracion_min"])

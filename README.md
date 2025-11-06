@@ -61,7 +61,7 @@ ruff .
 # Ejecutar con autocorrección 
 ruff . --fix
 
-  Integrantes
+ # Integrantes
 
 - Carolina Araque
 - Valentina Chaparro
